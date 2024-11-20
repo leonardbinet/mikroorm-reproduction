@@ -1,4 +1,5 @@
-import { Entity, MikroORM, PrimaryKey, Property } from '@mikro-orm/sqlite';
+import { MikroORM } from '@mikro-orm/postgresql';
+import {Entity, PrimaryKey, Property} from "@mikro-orm/core";
 
 @Entity()
 class User {
@@ -9,8 +10,8 @@ class User {
   @Property()
   name: string;
 
-  @Property({ type: 'json', nullable: true })
-  meta?: { age: number; sex: string };
+  @Property({ type: 'jsonb'})
+  meta: { age: number; sex: string };
 
   constructor(name: string, meta: { age: number; sex: string }) {
     this.name = name;
@@ -23,7 +24,11 @@ let orm: MikroORM;
 
 beforeAll(async () => {
   orm = await MikroORM.init({
-    dbName: ':memory:',
+    dbName: 'test',
+    host: 'localhost',
+    port: 5453,
+    user: "postgres_user",
+    password: "postgres_password",
     entities: [User],
     debug: ['query', 'query-params'],
     allowGlobalContext: true, // only for testing
@@ -40,6 +45,6 @@ test('basic CRUD example', async () => {
   await orm.em.flush();
   orm.em.clear();
 
-  const user = await orm.em.findOneOrFail(User, { meta: {$in: [{age: 21, sex: "M"}, {age: 21, sex: "F"}]} });
+  const user = await orm.em.findOneOrFail(User, { meta: {$in: [{age: 21, sex: "M"}]} });
   expect(user.name).toBe('Foo');
 });
