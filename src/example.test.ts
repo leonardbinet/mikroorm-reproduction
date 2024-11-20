@@ -9,12 +9,12 @@ class User {
   @Property()
   name: string;
 
-  @Property({ unique: true })
-  email: string;
+  @Property({ type: 'json', nullable: true })
+  meta?: { age: number; sex: string };
 
-  constructor(name: string, email: string) {
+  constructor(name: string, meta: { age: number; sex: string }) {
     this.name = name;
-    this.email = email;
+    this.meta = meta;
   }
 
 }
@@ -36,16 +36,10 @@ afterAll(async () => {
 });
 
 test('basic CRUD example', async () => {
-  orm.em.create(User, { name: 'Foo', email: 'foo' });
+  orm.em.create(User, { name: 'Foo', meta: { age: 21, sex: "M"} });
   await orm.em.flush();
   orm.em.clear();
 
-  const user = await orm.em.findOneOrFail(User, { email: 'foo' });
+  const user = await orm.em.findOneOrFail(User, { meta: {$in: [{age: 21, sex: "M"}, {age: 21, sex: "F"}]} });
   expect(user.name).toBe('Foo');
-  user.name = 'Bar';
-  orm.em.remove(user);
-  await orm.em.flush();
-
-  const count = await orm.em.count(User, { email: 'foo' });
-  expect(count).toBe(0);
 });
